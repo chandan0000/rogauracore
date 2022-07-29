@@ -196,10 +196,8 @@ MODE is one of {}.
 
 def parseargs(argv):
     # first identify the function the user wants
-    mapping = dict((x.__name__, x) for x in COLOR_FUNCS)
-    name = None
-    if argv:
-        name = argv[0]
+    mapping = {x.__name__: x for x in COLOR_FUNCS}
+    name = argv[0] if argv else None
     if (
         not argv
         or "-?" in argv
@@ -209,13 +207,13 @@ def parseargs(argv):
     ):
         print(USAGE.format(", ".join([x.__name__ for x in COLOR_FUNCS])))
         if name and name not in mapping:
-            print("Unknown MODE {}".format(name))
+            print(f"Unknown MODE {name}")
         sys.exit(1)
     func = mapping[name]
     # then figure out the arguments to that function
     argnames = inspect.signature(func).parameters.keys()
     if len(argv[1:]) != len(argnames):
-        print("Arguments for MODE {}: {}".format(name, ", ".join(argnames)))
+        print(f'Arguments for MODE {name}: {", ".join(argnames)}')
         print("\ncolor arguments should be given as hex values like ff0000 or #ff0000")
         print("speed argument should be given as an integer: 1, 2, or 3")
         sys.exit(1)
@@ -228,9 +226,7 @@ def parseargs(argv):
         elif argname == "speed":
             args[argname] = Speed(int(value))
         else:
-            raise Exception(
-                "Undecipherable argument name {} in function {}".format(argname, name)
-            )
+            raise Exception(f"Undecipherable argument name {argname} in function {name}")
     # now we have the args, we use them to invoke the proper function
     return func(**args)
 
@@ -244,12 +240,12 @@ def main():
 
     dev, iface, active_iface = acquire_usb()
 
-    for message in messages:
-        bmRequestType = 0x21
-        bRequest = 0x09
-        wValue = 0x035D
-        wIndex = 0
+    bmRequestType = 0x21
+    bRequest = 0x09
+    wValue = 0x035D
+    wIndex = 0
 
+    for message in messages:
         try:
             dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, message)
         except usb.USBError as e:
